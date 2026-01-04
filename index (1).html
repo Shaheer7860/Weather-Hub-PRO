@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Professional Weather Hub - Real-time weather forecasts, air quality, historical data, and interactive 3D globe">
+    <title>Weather Hub Pro - Advanced Weather Analytics</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Icons & Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.10/css/weather-icons.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    
+    <!-- D3.js -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    
+    <!-- Three.js for 3D Globe -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.min.js"></script>
+</head>
+<body class="dark-mode">
+    <div class="main-background">
+        <div class="container">
+            <!-- Header with Theme Toggle -->
+            <header class="header">
+                <div class="header-left">
+                    <div class="logo">
+                        <i class="fas fa-cloud-sun"></i>
+                        <span>WeatherHub Pro</span>
+                    </div>
+                </div>
+                
+                <div class="header-center">
+                    <div class="search-container">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" id="cityInput" placeholder="Search city..." class="search-input">
+                        <input type="text" id="countryInput" placeholder="Country (optional)" class="search-input country-input">
+                        <button id="searchBtn" class="search-btn">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="header-right">
+                    <div class="temp-toggle">
+                        <button id="toggleF" class="toggle-btn">°F</button>
+                        <button id="toggleC" class="toggle-btn active">°C</button>
+                    </div>
+                    <button id="themeToggle" class="theme-toggle" title="Toggle Dark/Light Mode">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Severe Weather Alert Banner -->
+            <div class="alert-banner" id="alertBanner" style="display: none;">
+                <div class="alert-content">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <div class="alert-text">
+                        <strong id="alertTitle">Severe Weather Alert</strong>
+                        <span id="alertMessage">No active alerts</span>
+                    </div>
+                    <button class="alert-close" id="alertClose">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
+            <main class="content-wrapper" id="contentWrapper">
+                <!-- Current Weather Section -->
+                <section class="current-weather-section">
+                    <div class="current-details">
+                        <h2 id="currentLocation">Loading...</h2>
+                        <p id="currentTime">--:-- --</p>
+                        <p id="currentUpdated">Live Data Feed</p>
+                    </div>
+                    <div class="current-temp-container">
+                        <div class="current-icon">
+                            <i id="currentIcon" class="wi wi-day-sunny"></i>
+                        </div>
+                        <div class="current-temp">
+                            <span id="currentTemp">--</span>°
+                        </div>
+                        <div class="current-condition">
+                            <p id="currentCondition">Clear</p>
+                            <p id="currentHL">H: --° L: --°</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Additional Current Weather Details -->
+                    <div class="current-details-grid">
+                        <div class="detail-card">
+                            <i class="fas fa-tint"></i>
+                            <div>
+                                <span class="detail-label">Humidity</span>
+                                <span class="detail-value" id="humidity">--%</span>
+                            </div>
+                        </div>
+                        <div class="detail-card">
+                            <i class="fas fa-wind"></i>
+                            <div>
+                                <span class="detail-label">Wind Speed</span>
+                                <span class="detail-value" id="windSpeed">-- km/h</span>
+                            </div>
+                        </div>
+                        <div class="detail-card">
+                            <i class="fas fa-eye"></i>
+                            <div>
+                                <span class="detail-label">Visibility</span>
+                                <span class="detail-value" id="visibility">-- km</span>
+                            </div>
+                        </div>
+                        <div class="detail-card">
+                            <i class="fas fa-thermometer-half"></i>
+                            <div>
+                                <span class="detail-label">Feels Like</span>
+                                <span class="detail-value" id="feelsLike">--°</span>
+                            </div>
+                        </div>
+                        <div class="detail-card">
+                            <i class="fas fa-compress-arrows-alt"></i>
+                            <div>
+                                <span class="detail-label">Pressure</span>
+                                <span class="detail-value" id="pressure">-- mb</span>
+                            </div>
+                        </div>
+                        <div class="detail-card">
+                            <i class="fas fa-sun"></i>
+                            <div>
+                                <span class="detail-label">UV Index</span>
+                                <span class="detail-value" id="uvIndex">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Air Quality & Health Section -->
+                <section class="air-quality-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-lungs"></i>
+                        Air Quality & Health
+                    </h3>
+                    <div class="air-quality-grid">
+                        <div class="aqi-card">
+                            <div class="aqi-header">
+                                <span class="aqi-label">Air Quality Index</span>
+                                <span class="aqi-value" id="aqiValue">--</span>
+                            </div>
+                            <div class="aqi-bar-container">
+                                <div class="aqi-bar" id="aqiBar"></div>
+                            </div>
+                            <div class="aqi-status" id="aqiStatus">Loading...</div>
+                        </div>
+                        <div class="health-metrics">
+                            <div class="health-item">
+                                <i class="fas fa-smog"></i>
+                                <div>
+                                    <span class="health-label">PM2.5</span>
+                                    <span class="health-value" id="pm25">--</span>
+                                </div>
+                            </div>
+                            <div class="health-item">
+                                <i class="fas fa-wind"></i>
+                                <div>
+                                    <span class="health-label">PM10</span>
+                                    <span class="health-value" id="pm10">--</span>
+                                </div>
+                            </div>
+                            <div class="health-item">
+                                <i class="fas fa-cloud"></i>
+                                <div>
+                                    <span class="health-label">O₃</span>
+                                    <span class="health-value" id="o3">--</span>
+                                </div>
+                            </div>
+                            <div class="health-item">
+                                <i class="fas fa-industry"></i>
+                                <div>
+                                    <span class="health-label">NO₂</span>
+                                    <span class="health-value" id="no2">--</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3D Globe Section -->
+                <section class="globe-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-globe"></i>
+                        Interactive 3D Globe
+                    </h3>
+                    <div class="globe-container">
+                        <canvas id="globeCanvas"></canvas>
+                        <div id="globeLoading" class="globe-loading">
+                            <div class="spinner-small"></div>
+                            <p>Loading 3D Globe...</p>
+                        </div>
+                        <div class="globe-overlay">
+                            <div class="globe-info">
+                                <p id="globeLocation">Click on the globe to select a location</p>
+                                <p id="globeCoords">Lat: --, Lon: --</p>
+                                <p class="globe-hint"><i class="fas fa-hand-pointer"></i> Click anywhere on Earth to get weather</p>
+                            </div>
+                        </div>
+                        <div class="globe-instructions">
+                            <i class="fas fa-info-circle"></i>
+                            <span>Drag to rotate • Click to select location</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Advanced Charts Section -->
+                <section class="charts-section">
+                    <div class="charts-tabs">
+                        <button class="chart-tab active" data-chart="temperature">
+                            <i class="fas fa-thermometer-half"></i>
+                            Temperature
+                        </button>
+                        <button class="chart-tab" data-chart="precipitation">
+                            <i class="fas fa-cloud-rain"></i>
+                            Precipitation
+                        </button>
+                        <button class="chart-tab" data-chart="wind">
+                            <i class="fas fa-wind"></i>
+                            Wind
+                        </button>
+                    </div>
+                    
+                    <div class="chart-wrapper active" id="temperatureChart">
+                        <h4 class="chart-title">24-Hour Temperature Forecast</h4>
+                        <div class="chart-container-large">
+                            <canvas id="tempChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-wrapper" id="precipitationChart">
+                        <h4 class="chart-title">24-Hour Precipitation Forecast</h4>
+                        <div class="chart-container-large">
+                            <canvas id="precipChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-wrapper" id="windChart">
+                        <h4 class="chart-title">24-Hour Wind Speed & Gusts</h4>
+                        <div class="chart-container-large">
+                            <canvas id="windChartCanvas"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Hourly Forecast Section -->
+                <section class="hourly-forecast-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-clock"></i>
+                        Hourly Forecast
+                    </h3>
+                    <div class="hourly-scroll-container">
+                        <div class="hourly-forecast-container" id="hourlyForecastContainer">
+                            <!-- Hourly items will be injected here -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Daily Forecast Section -->
+                <section class="daily-forecast-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-calendar-week"></i>
+                        5-Day Forecast
+                    </h3>
+                    <div class="daily-forecast-container" id="dailyForecastContainer">
+                        <!-- Daily items will be injected here -->
+                    </div>
+                </section>
+
+                <!-- Historical Data Section -->
+                <section class="historical-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-history"></i>
+                        Historical Weather Data
+                    </h3>
+                    <div class="historical-controls">
+                        <input type="date" id="historicalDate" class="date-input" max="">
+                        <button id="loadHistorical" class="historical-btn">
+                            <i class="fas fa-search"></i>
+                            Load Historical Data
+                        </button>
+                    </div>
+                    <div class="historical-results" id="historicalResults">
+                        <p class="historical-placeholder">Select a date to view historical weather data</p>
+                    </div>
+                </section>
+            </main>
+
+            <!-- Loading Overlay -->
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Acquiring Signal...</p>
+            </div>
+
+            <!-- Error Message -->
+            <div class="error-message" id="errorMessage">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>Signal Lost. Location not found.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
